@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CodeGrid — Lógica de Programação Interativa</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- Cabeçalho Superior -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-logo">&lt;/&gt;</span>
+      <div>
+        <h1>CodeGrid</h1>
+        <span class="brand-subtitle">Laboratório de Lógica e Algoritmos</span>
+      </div>
+    </div>
+
+    <div class="level-controls">
+      <button id="btn-prev-level" class="btn btn-ghost" title="Fase anterior">◀</button>
+      <select id="level-select" aria-label="Selecionar fase">
+        <option value="0">Fase 1: Primeiros Passos</option>
+      </select>
+      <button id="btn-next-level" class="btn btn-ghost" title="Próxima fase">▶</button>
+      <span id="concept-badge" class="badge">Sequência Lógica</span>
+    </div>
+  </header>
+
+  <!-- Barra de Missão e Dica Pedagógica -->
+  <section class="mission-bar">
+    <div class="mission-info">
+      <h2 id="level-title">Fase 1: Primeiros Passos</h2>
+      <p id="level-objective">Guie o robô até o portal de energia usando os blocos de comando.</p>
+    </div>
+    <div class="mission-actions">
+      <button id="btn-hint" class="btn btn-outline">💡 Ver Dica</button>
+    </div>
+    <div id="hint-box" class="hint-box hidden">
+      <strong>Dica:</strong> <span id="level-hint">Conte quantos quadrados existem até o portal antes de executar.</span>
+    </div>
+  </section>
+
+  <!-- Área Principal em 3 Colunas -->
+  <main class="workspace">
+    <!-- Coluna 1: Tabuleiro Gráfico (Canvas) -->
+    <section class="panel panel-board">
+      <div class="panel-header">
+        <h3>Estação (Tabuleiro)</h3>
+        <div class="legend">
+          <span class="legend-item"><i class="dot dot-robot"></i>Robô</span>
+          <span class="legend-item"><i class="dot dot-goal"></i>Portal</span>
+          <span class="legend-item"><i class="dot dot-item"></i>Núcleo</span>
+          <span class="legend-item"><i class="dot dot-wall"></i>Parede</span>
+        </div>
+      </div>
+
+      <div class="canvas-wrapper">
+        <canvas id="game-canvas" width="460" height="460"></canvas>
+      </div>
+
+      <div class="execution-bar">
+        <button id="btn-run" class="btn btn-primary">▶ Executar</button>
+        <button id="btn-step" class="btn btn-secondary">⏭ Passo</button>
+        <button id="btn-reset" class="btn btn-danger-outline">↺ Resetar</button>
+
+        <label class="speed-control" for="speed-select">
+          <span>Velocidade:</span>
+          <select id="speed-select">
+            <option value="750">Lenta</option>
+            <option value="420" selected>Normal</option>
+            <option value="180">Rápida</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <!-- Coluna 2: Paleta de Blocos e Fila de Instruções -->
+    <section class="panel panel-blocks">
+      <div class="panel-header">
+        <h3>Comandos Disponíveis</h3>
+        <span class="panel-tag">Clique para adicionar</span>
+      </div>
+
+      <div id="command-palette" class="command-palette">
+        <button class="cmd-btn" data-cmd="mover">
+          <span class="cmd-icon">⬆</span>
+          <span class="cmd-label">mover()</span>
+        </button>
+        <button class="cmd-btn" data-cmd="virar_esquerda">
+          <span class="cmd-icon">↺</span>
+          <span class="cmd-label">virar_esquerda()</span>
+        </button>
+        <button class="cmd-btn" data-cmd="virar_direita">
+          <span class="cmd-icon">↻</span>
+          <span class="cmd-label">virar_direita()</span>
+        </button>
+      </div>
+
+      <div class="queue-header">
+        <h4>Seu Algoritmo <span id="block-counter" class="counter">0 / 5 blocos</span></h4>
+        <button id="btn-clear" class="btn btn-ghost btn-sm">🗑 Limpar fila</button>
+      </div>
+
+      <div class="queue-wrapper">
+        <ol id="program-queue" class="program-queue">
+          <li class="queue-empty">Clique nos comandos acima para montar a sequência de instruções do robô.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- Coluna 3: Visor de Código Espelhado e Feedback Didático -->
+    <section class="panel panel-code">
+      <div class="panel-header">
+        <h3>Código Equivalente</h3>
+        <span class="panel-tag code-lang">codigo_robo.py</span>
+      </div>
+
+      <div id="code-viewer" class="code-viewer" aria-live="polite">
+        <div class="code-line comment"># Seu algoritmo aparecerá aqui em tempo real</div>
+      </div>
+
+      <div class="console-section">
+        <div class="console-header">Console de Diagnóstico</div>
+        <div id="feedback-box" class="feedback-box status-idle">
+          Pronto. Monte sua sequência de blocos e clique em <strong>Executar</strong>.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Scripts carregados em ordem para compatibilidade total (local file:// e servidor) -->
+  <script src="js/levels.js" defer></script>
+  <script src="js/renderer.js" defer></script>
+  <script src="js/engine.js" defer></script>
+  <script src="js/main.js" defer></script>
+</body>
+</html>
