@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const blockCounter = document.getElementById("block-counter");
   const btnClear = document.getElementById("btn-clear");
   const programQueueEl = document.getElementById("program-queue");
+  const languageSelect = document.getElementById("language-select");
   const codeViewerEl = document.getElementById("code-viewer");
   const feedbackBox = document.getElementById("feedback-box");
 
@@ -35,10 +36,48 @@ document.addEventListener("DOMContentLoaded", () => {
   let program = []; // Fila de comandos montada pelo jogador
 
   const commandLabels = {
-    mover: { icon: "⬆", code: "mover()" },
-    virar_esquerda: { icon: "↺", code: "virar_esquerda()" },
-    virar_direita: { icon: "↻", code: "virar_direita()" }
+    mover: { icon: "⬆", queueLabel: "mover()" },
+    virar_esquerda: { icon: "↺", queueLabel: "virar_esquerda()" },
+    virar_direita: { icon: "↻", queueLabel: "virar_direita()" }
   };
+
+  // Configuração de transpilação visual por linguagem
+  const languageConfig = {
+    python: {
+      commentPrefix: "#",
+      header: [],
+      footer: [],
+      formatCommand: (cmd) => `${cmd}()`
+    },
+    java: {
+      commentPrefix: "//",
+      header: [
+        "public class CodigoRobo {",
+        "    public static void main(String[] args) {"
+      ],
+      footer: [
+        "    }",
+        "}"
+      ],
+      formatCommand: (cmd) => `        robo.${toCamelCase(cmd)}();`
+    },
+    cpp: {
+      commentPrefix: "//",
+      header: [
+        "#include \"robo.h\"",
+        "int main() {"
+      ],
+      footer: [
+        "    return 0;",
+        "}"
+      ],
+      formatCommand: (cmd) => `    robo.${cmd}();`
+    }
+  };
+
+  function toCamelCase(snakeStr) {
+    return snakeStr.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+  }
 
   // Inicializa seletor de fases
   function initLevelSelector() {
@@ -126,7 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
       numSpan.textContent = `${idx + 1}.`;
 
       const labelSpan = document.createElement("span");
-      labelSpan.textContent = `${commandLabels[cmd].icon} ${commandLabels[cmd].code}`;
+      labelSpan.textContent = `${commandLabels[cmd].icon} ${commandLabels[cmd].queueLabel}`;
 
       leftDiv.appendChild(numSpan);
       leftDiv.appendChild(labelSpan);
@@ -150,39 +189,69 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function createCodeLine(lineNumber, text, options = {}) {
+    const lineDiv = document.createElement("div");
+    lineDiv.className = "code-line";
+    if (options.isComment) lineDiv.classList.add("comment");
+    if (options.isActive) lineDiv.classList.add("active-line");
+
+    const lineNum = document.createElement("span");
+    lineNum.className = "line-num";
+    lineNum.textContent = lineNumber !== null ? String(lineNumber) : "";
+
+    const codeText = document.createElement("pre");
+    codeText.style.margin = "0";
+    codeText.style.fontFamily = "inherit";
+    codeText.textContent = text;
+
+    lineDiv.appendChild(lineNum);
+    lineDiv.appendChild(codeText);
+    return lineDiv;
+  }
+
   function renderCodeViewer(activeIndex) {
     codeViewerEl.innerHTML = "";
+    const langKey = languageSelect ? languageSelect.value : "python";
+    const config = languageConfig[langKey] || languageConfig.python;
 
-    const headerComment = document.createElement("div");
-    headerComment.className = "code-line comment";
-    headerComment.textContent = `# ${LEVELS[currentLevelIndex].titulo}`;
-    codeViewerEl.appendChild(headerComment);
+    let currentLineNum = 1;
 
+    // Comentário inicial da fase
+    codeViewerEl.appendChild(
+      createCodeLine(currentLineNum++, `${config.commentPrefix} ${LEVELS[currentLevelIndex].titulo}`, {
+        isComment: true
+      })
+    );
+
+    // Cabeçalho estrutural (ex: classe/main em Java ou main em C++)
+    config.header.forEach((headerLine) => {
+      codeViewerEl.appendChild(createCodeLine(currentLineNum++, headerLine));
+    });
+
+    // Corpo do algoritmo
     if (program.length === 0) {
-      const emptyComment = document.createElement("div");
-      emptyComment.className = "code-line comment";
-      emptyComment.textContent = "# Seu algoritmo aparecerá aqui em tempo real";
-      codeViewerEl.appendChild(emptyComment);
-      return;
+      const indent = config.header.length > 0 ? "    ".repeat(config.header.length) : "";
+      codeViewerEl.appendChild(
+        createCodeLine(
+          currentLineNum++,
+          `${indent}${config.commentPrefix} Adicione blocos para gerar o código`,
+          { isComment: true }
+        )
+      );
+    } else {
+      program.forEach((cmd, idx) => {
+        const formattedCode = config.formatCommand(cmd);
+        codeViewerEl.appendChild(
+          createCodeLine(currentLineNum++, formattedCode, {
+            isActive: idx === activeIndex
+          })
+        );
+      });
     }
 
-    program.forEach((cmd, idx) => {
-      const lineDiv = document.createElement("div");
-      lineDiv.className = "code-line";
-      if (idx === activeIndex) {
-        lineDiv.classList.add("active-line");
-      }
-
-      const lineNum = document.createElement("span");
-      lineNum.className = "line-num";
-      lineNum.textContent = String(idx + 1);
-
-      const codeText = document.createElement("span");
-      codeText.textContent = commandLabels[cmd].code;
-
-      lineDiv.appendChild(lineNum);
-      lineDiv.appendChild(codeText);
-      codeViewerEl.appendChild(lineDiv);
+    // Fechamento de blocos (chaves / return)
+    config.footer.forEach((footerLine) => {
+      codeViewerEl.appendChild(createCodeLine(currentLineNum++, footerLine));
     });
   }
 
@@ -227,6 +296,13 @@ document.addEventListener("DOMContentLoaded", () => {
     refreshAllViews();
   });
 
+  // Evento: Troca de linguagem de prévia (Python, Java, C++)
+  if (languageSelect) {
+    languageSelect.addEventListener("change", () => {
+      renderCodeViewer(engine.getState().currentStepIndex);
+    });
+  }
+
   // Eventos: Limpar fila e Resetar tabuleiro
   btnClear.addEventListener("click", () => {
     program = [];
@@ -259,7 +335,9 @@ document.addEventListener("DOMContentLoaded", () => {
       onComplete: (successMsg) => {
         setControlsDisabled(false);
         const hasNext = currentLevelIndex < LEVELS.length - 1;
-        const extra = hasNext ? " Avance para a próxima fase no topo da tela!" : " Você completou todas as fases da Fase 1!";
+        const extra = hasNext
+          ? " Avance para a próxima fase no topo da tela!"
+          : " Você completou todas as fases da Fase 1!";
         setFeedback(`<strong>Sucesso!</strong> ${successMsg}${extra}`, "success");
       },
       onError: (errorMsg) => {
